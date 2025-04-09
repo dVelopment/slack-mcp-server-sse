@@ -2,7 +2,7 @@ name: slack-mcp-server
 
 services:
   slack-mcp-server:
-    # The following build configuration is for building the image locally
+    # Build the image locally with wget installed for healthcheck
     # build:
     #   context: .
     #   dockerfile: Dockerfile
@@ -11,21 +11,22 @@ services:
     # Use the pre-built Docker image from GitHub Container Registry
     # This image supports multiple architectures (amd64, arm64, arm/v7)
     # and will automatically use the right one for your platform
-    image: ghcr.io/dvelopment/slack-mcp-server-sse:v1.0.5
+    image: ghcr.io/dvelopment/slack-mcp-server-sse:v1.1.0
     container_name: slack-mcp-server-sse
     ports:
-      - "${PORT:-3000}:${PORT:-3000}"
+      - "${HOST:-0.0.0.0}:${PORT:-3000}:3000"
     environment:
       - NODE_ENV=production
       - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
       - SLACK_TEAM_ID=${SLACK_TEAM_ID}
-      - PORT=${PORT:-3000}
+      - PORT=3000
+      - HOST=${HOST:-127.0.0.1}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${PORT:-3000}/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://0.0.0.0:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 30s
     volumes:
       - ./logs:/app/logs
