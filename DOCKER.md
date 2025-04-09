@@ -9,6 +9,33 @@ This document provides instructions for building, running, and publishing the Sl
 - Docker and Docker Compose installed
 - Slack Bot Token and Team ID
 
+### Obtaining Slack Bot Token and Team ID
+
+1. Create a Slack App:
+   - Visit the [Slack Apps page](https://api.slack.com/apps)
+   - Click "Create New App"
+   - Choose "From scratch"
+   - Name your app and select your workspace
+
+2. Configure Bot Token Scopes:
+   - Navigate to "OAuth & Permissions" in your app settings
+   - Add these scopes:
+     - `channels:history` - View messages and other content in public channels
+     - `channels:read` - View basic channel information
+     - `chat:write` - Send messages as the app
+     - `reactions:write` - Add emoji reactions to messages
+     - `users:read` - View users and their basic information
+
+3. Install App to Workspace:
+   - Click "Install to Workspace" and authorize the app
+   - Save the "Bot User OAuth Token" that starts with `xoxb-`
+
+4. Get your Team ID:
+   - Open Slack in a web browser
+   - Once logged in, check the URL in your browser
+   - The URL will be in a format like: `https://app.slack.com/client/T01234567/...`
+   - Your Team ID is the string beginning with T (e.g., `T01234567`)
+
 ### Building and Running Locally
 
 1. Create a `.env` file with your Slack credentials:
