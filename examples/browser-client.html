@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slack MCP SSE Client Example</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    #connection-status {
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+    .connected {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .disconnected {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .connecting {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    #log-container {
+      height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      background-color: #f8f9fa;
+    }
+    .log-entry {
+      margin-bottom: 5px;
+      padding: 5px;
+      border-bottom: 1px solid #eee;
+    }
+    .log-time {
+      color: #6c757d;
+      font-size: 0.8em;
+    }
+    .log-message {
+      margin-left: 10px;
+    }
+    .log-error {
+      color: #dc3545;
+    }
+    .log-success {
+      color: #28a745;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0069d9;
+    }
+    button:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>Slack MCP SSE Client Example</h1>
+  
+  <div id="connection-status" class="disconnected">
+    Disconnected
+  </div>
+  
+  <div>
+    <label for="server-url">Server URL:</label>
+    <input type="text" id="server-url" value="http://localhost:3000/sse" style="width: 300px;">
+    <button id="connect-btn">Connect</button>
+    <button id="disconnect-btn" disabled>Disconnect</button>
+  </div>
+  
+  <h2>Event Log</h2>
+  <div id="log-container"></div>
+  
+  <h2>Example Requests</h2>
+  <div>
+    <button id="list-channels-btn" disabled>List Channels</button>
+    <button id="clear-log-btn">Clear Log</button>
+  </div>
+  
+  <script>
+    let eventSource = null;
+    
+    const connectionStatus = document.getElementById('connection-status');
+    const logContainer = document.getElementById('log-container');
+    const serverUrlInput = document.getElementById('server-url');
+    const connectBtn = document.getElementById('connect-btn');
+    const disconnectBtn = document.getElementById('disconnect-btn');
+    const listChannelsBtn = document.getElementById('list-channels-btn');
+    const clearLogBtn = document.getElementById('clear-log-btn');
+    
+    // Log message to the log container
+    function logMessage(message, type = 'info') {
+      const logEntry = document.createElement('div');
+      logEntry.className = `log-entry ${type === 'error' ? 'log-error' : type === 'success' ? 'log-success' : ''}`;
+      
+      const time = new Date().toLocaleTimeString();
+      const logTime = document.createElement('span');
+      logTime.className = 'log-time';
+      logTime.textContent = time;
+      
+      const logText = document.createElement('span');
+      logText.className = 'log-message';
+      logText.textContent = message;
+      
+      logEntry.appendChild(logTime);
+      logEntry.appendChild(logText);
+      
+      logContainer.appendChild(logEntry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+    
+    // Connect to the SSE server
+    function connectToSSE() {
+      const serverUrl = serverUrlInput.value.trim();
+      if (!serverUrl) {
+        logMessage('Please enter a server URL', 'error');
+        return;
+      }
+      
+      try {
+        // Update UI
+        connectionStatus.className = 'connecting';
+        connectionStatus.textContent = 'Connecting...';
+        connectBtn.disabled = true;
+        
+        logMessage(`Connecting to ${serverUrl}...`);
+        
+        // Create EventSource
+        eventSource = new EventSource(serverUrl);
+        
+        // Handle connection open
+        eventSource.onopen = () => {
+          connectionStatus.className = 'connected';
+          connectionStatus.textContent = 'Connected';
+          disconnectBtn.disabled = false;
+          listChannelsBtn.disabled = false;
+          logMessage('Connected to SSE server', 'success');
+        };
+        
+        // Handle messages
+        eventSource.onmessage = (event) => {
+          logMessage(`Received: ${event.data}`);
+          try {
+            const data = JSON.parse(event.data);
+            console.log('Parsed data:', data);
+          } catch (error) {
+            // Not JSON, just log the raw message
+          }
+        };
+        
+        // Handle errors
+        eventSource.onerror = (error) => {
+          logMessage('Connection error', 'error');
+          disconnectSSE();
+          
+          // Auto-reconnect after 5 seconds
+          setTimeout(() => {
+            if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
+              logMessage('Attempting to reconnect...', 'info');
+              connectToSSE();
+            }
+          }, 5000);
+        };
+      } catch (error) {
+        logMessage(`Error: ${error.message}`, 'error');
+        disconnectSSE();
+      }
+    }
+    
+    // Disconnect from the SSE server
+    function disconnectSSE() {
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      
+      connectionStatus.className = 'disconnected';
+      connectionStatus.textContent = 'Disconnected';
+      connectBtn.disabled = false;
+      disconnectBtn.disabled = true;
+      listChannelsBtn.disabled = true;
+      
+      logMessage('Disconnected from SSE server');
+    }
+    
+    // Example request: List channels
+    function listChannels() {
+      logMessage('This is just a demo. In a real MCP client, this would send a request to list channels.');
+      
+      // This is just for demonstration purposes
+      // In a real MCP client, you would send this request to the server
+      const exampleRequest = {
+        id: Date.now().toString(),
+        method: 'tool',
+        params: {
+          name: 'slack_list_channels',
+          arguments: {
+            limit: 10
+          }
+        }
+      };
+      
+      logMessage(`Example request: ${JSON.stringify(exampleRequest)}`);
+    }
+    
+    // Clear the log
+    function clearLog() {
+      logContainer.innerHTML = '';
+      logMessage('Log cleared');
+    }
+    
+    // Event listeners
+    connectBtn.addEventListener('click', connectToSSE);
+    disconnectBtn.addEventListener('click', disconnectSSE);
+    listChannelsBtn.addEventListener('click', listChannels);
+    clearLogBtn.addEventListener('click', clearLog);
+    
+    // Initial log message
+    logMessage('Client initialized. Click "Connect" to connect to the SSE server.');
+  </script>
+</body>
+</html>

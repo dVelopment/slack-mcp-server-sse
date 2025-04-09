@@ -1,0 +1,25 @@
+name: slack-mcp-server
+
+services:
+  slack-mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: slack-mcp-server-sse:local
+    container_name: slack-mcp-server-sse
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    environment:
+      - NODE_ENV=production
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_TEAM_ID=${SLACK_TEAM_ID}
+      - PORT=${PORT:-3000}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${PORT:-3000}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ./logs:/app/logs
