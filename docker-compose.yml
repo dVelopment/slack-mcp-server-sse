@@ -11,7 +11,7 @@ services:
     # Use the pre-built Docker image from GitHub Container Registry
     # This image supports multiple architectures (amd64, arm64, arm/v7)
     # and will automatically use the right one for your platform
-    image: ghcr.io/dvelopment/slack-mcp-server-sse:v1.0.3
+    image: ghcr.io/dvelopment/slack-mcp-server-sse:v1.0.5
     container_name: slack-mcp-server-sse
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
