@@ -2,10 +2,7 @@ name: Build and Publish Docker Image
 
 on:
   push:
-    branches: [ main ]
     tags: [ 'v*' ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build-and-push:
@@ -35,7 +32,9 @@ jobs:
         with:
           images: ghcr.io/dvelopment/slack-mcp-server-sse
           tags: |
-            type=semver,pattern={{version}}
+            type=ref,event=tag,pattern=v{{version}}
+            type=ref,event=tag,pattern=v{{major}}.{{minor}}
+            type=ref,event=tag,pattern=v{{major}}
             type=ref,event=branch
             type=ref,event=pr
             type=sha,format=short
@@ -44,7 +43,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

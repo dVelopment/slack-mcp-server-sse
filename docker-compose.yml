@@ -2,10 +2,14 @@ name: slack-mcp-server
 
 services:
   slack-mcp-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: slack-mcp-server-sse:local
+    # The following build configuration is for building the image locally
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    # image: slack-mcp-server-sse:local
+    
+    # Use the pre-built Docker image from GitHub Container Registry
+    image: ghcr.io/dvelopment/slack-mcp-server-sse
     container_name: slack-mcp-server-sse
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
